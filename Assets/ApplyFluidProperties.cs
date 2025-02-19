@@ -4,12 +4,15 @@ using UnityEngine;
 using UnityEngine.VFX;
 
 [RequireComponent(typeof(VisualEffect))]
-public class ApplyVelocity : MonoBehaviour
+public class ApplyFluidProperties : MonoBehaviour
 {
     [SerializeField] private Fluid fluidSimulator;
 
     private VisualEffect effect;
-    private static readonly int vfxProperty = Shader.PropertyToID("VelocityField");
+    private static readonly int velocityFieldProperty = Shader.PropertyToID("VelocityField");
+    private static readonly int playerRelativePositionProperty = Shader.PropertyToID("PlayerRelativePosition");
+
+    [SerializeField] private GameObject player;
 
     private void OnEnable()
     {
@@ -25,6 +28,7 @@ public class ApplyVelocity : MonoBehaviour
     private void Update()
     {
         Texture velocityField = fluidSimulator.GetVelocityField();
-        effect.SetTexture(vfxProperty, velocityField);
+        effect.SetTexture(velocityFieldProperty, velocityField);
+        effect.SetVector3(playerRelativePositionProperty, player.transform.position - transform.position);
     }
 }
