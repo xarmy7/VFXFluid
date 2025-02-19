@@ -14,6 +14,8 @@ namespace StableFluids
         [SerializeField] float _force = 300;
         [SerializeField] float _exponent = 200;
         [SerializeField] Texture2D _initial;
+        [SerializeField] GameObject _player;
+        [SerializeField] GameObject _plane;
 
         #endregion
 
@@ -26,7 +28,7 @@ namespace StableFluids
 
         #region Private members
 
-        Material _shaderSheet;
+        [SerializeField] Material _shaderSheet;
         Vector2 _previousInput;
 
         static class Kernels
@@ -85,7 +87,8 @@ namespace StableFluids
 
         void Start()
         {
-            _shaderSheet = new Material(_shader);
+	     if (!_shaderSheet)
+                _shaderSheet = new Material(_shader);
 
             VFB.V1 = AllocateBuffer(2);
             VFB.V2 = AllocateBuffer(2);
@@ -98,9 +101,10 @@ namespace StableFluids
 
             Graphics.Blit(_initial, _colorRT1);
 
-        #if UNITY_IOS
+
+#if UNITY_IOS
             Application.targetFrameRate = 60;
-        #endif
+#endif
         }
 
         void OnDestroy()
@@ -122,11 +126,26 @@ namespace StableFluids
             var dt = Time.deltaTime;
             var dx = 1.0f / ResolutionY;
 
-            // Input point
+            //Input point
+            //var input = new Vector2(
+            //    (Input.mousePosition.x - Screen.width * 0.5f) / Screen.height,
+            //    (Input.mousePosition.y - Screen.height * 0.5f) / Screen.height
+            //);
+
+            //float playerX = (_player.transform.position.x - _plane.transform.position.x + (_plane.transform.position.x / 2)) / _plane.transform.localScale.x;
+            //float playerZ = (_player.transform.position.z - _plane.transform.position.z + (_plane.transform.position.z / 2)) / _plane.transform.localScale.z;
+
+            float playerX = ((_player.transform.position.x - _plane.transform.position.x) * -1 / _plane.transform.lossyScale.x) / 10f;
+            float playerZ = ((_player.transform.position.z - _plane.transform.position.z) * -1 / _plane.transform.lossyScale.z) / 10f;
+
             var input = new Vector2(
-                (Input.mousePosition.x - Screen.width  * 0.5f) / Screen.height,
-                (Input.mousePosition.y - Screen.height * 0.5f) / Screen.height
+                playerX,
+                playerZ
             );
+
+
+            if (_player == null) return;
+            if (_compute == null) return;
 
             // Common variables
             _compute.SetFloat("Time", Time.time);
@@ -162,14 +181,15 @@ namespace StableFluids
             _compute.SetTexture(Kernels.Force, "W_in", VFB.V2);
             _compute.SetTexture(Kernels.Force, "W_out", VFB.V3);
 
-            if (Input.GetMouseButton(1))
-                // Random push
-                _compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
-            else if (Input.GetMouseButton(0))
-                // Mouse drag
-                _compute.SetVector("ForceVector", (input - _previousInput) * _force);
-            else
-                _compute.SetVector("ForceVector", Vector4.zero);
+            //if (Input.GetMouseButton(1))
+            //    // Random push
+            //    _compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
+            //else if (Input.GetMouseButton(0))
+            //    // Mouse drag
+            //    _compute.SetVector("ForceVector", (input - _previousInput) * _force);
+            //else
+            _compute.SetVector("ForceVector", (input - _previousInput) * _force);
+                //_compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
 
             _compute.Dispatch(Kernels.Force, ThreadCountX, ThreadCountY, 1);
 
@@ -205,8 +225,11 @@ namespace StableFluids
             var offs = Vector2.one * (Input.GetMouseButton(1) ? 0 : 1e+7f);
             _shaderSheet.SetVector("_ForceOrigin", input + offs);
             _shaderSheet.SetFloat("_ForceExponent", _exponent);
+            _shaderSheet.SetTexture("_MainTex", _colorRT1);
             _shaderSheet.SetTexture("_VelocityField", VFB.V1);
             Graphics.Blit(_colorRT1, _colorRT2, _shaderSheet, 0);
+
+            
 
             // Swap the color buffers.
             var temp = _colorRT1;
