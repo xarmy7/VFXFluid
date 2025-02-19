@@ -8,6 +8,8 @@
 #pragma kernel Jacobi1
 #pragma kernel Jacobi2
 
+float2 PlayerVelocity;
+
 // Common parameter
 float Time;
 float DeltaTime;
@@ -72,7 +74,7 @@ void Force(uint2 tid : SV_DispatchThreadID)
     float2 pos = (tid + 0.5 - dim * 0.5) / dim.y;
     float amp = exp(-ForceExponent * distance(ForceOrigin, pos));
 
-    W_out[tid] = W_in[tid] + ForceVector * amp;
+    W_out[tid] = W_in[tid] + ForceVector * amp + PlayerVelocity * 0.1;
 }
 
 // Setup for Project step (divW calculation)
