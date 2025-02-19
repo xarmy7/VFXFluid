@@ -1,11 +1,10 @@
 fileFormatVersion: 2
-guid: 85520b40d8f27b44588788939d6bf488
+guid: 2a8e2007bf3cd0d47bec561c14964998
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - _computeShader: {fileID: 7200000, guid: cd1f70f1f6b4beb45a02e1c088f0a109, type: 3}
-  - _fluid: {instanceID: 0}
+  - fluidMaterial: {fileID: 2100000, guid: e09a119bae3d37c4baa95b669d075d85, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -239,6 +239,11 @@ namespace StableFluids
             _previousInput = input;
         }
 
+        public Texture GetVelocityField()
+        {
+            return VFB.V1;
+        }
+
         void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
             Graphics.Blit(_colorRT1, destination, _shaderSheet, 1);

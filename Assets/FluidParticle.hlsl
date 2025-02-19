@@ -1,4 +1,6 @@
-void MonGrosProut(inout VFXAttributes attributes, in VFXSampler2D velocityField, in int particleCount)
+
+void ApplyVelocityField(inout VFXAttributes attributes, VFXSampler2D velocityField)
 {
-    attributes.velocity.xyz = SampleTexture(velocityField, attributes.position.xyz);
+    float4 v = velocityField.t.SampleLevel(velocityField.s, attributes.position.xy, 0.0);
+    attributes.velocity = float3(v.x, 0.0, v.y);
 }
