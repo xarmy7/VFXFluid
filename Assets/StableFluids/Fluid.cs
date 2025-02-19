@@ -14,8 +14,11 @@ namespace StableFluids
         [SerializeField] float _force = 300;
         [SerializeField] float _exponent = 200;
         [SerializeField] Texture2D _initial;
+
+
         [SerializeField] GameObject _player;
-        [SerializeField] GameObject _plane;
+        // plane with the material
+        [SerializeField] GameObject _target;
 
         #endregion
 
@@ -41,8 +44,8 @@ namespace StableFluids
             public const int Jacobi2 = 5;
         }
 
-        int ThreadCountX { get { return (_resolution                                + 7) / 8; } }
-        int ThreadCountY { get { return (_resolution * Screen.height / Screen.width + 7) / 8; } }
+        int ThreadCountX { get { return (_resolution + 7) / 8; } }
+        int ThreadCountY { get { return (_resolution + 7) / 8; } }
 
         int ResolutionX { get { return ThreadCountX * 8; } }
         int ResolutionY { get { return ThreadCountY * 8; } }
@@ -96,8 +99,8 @@ namespace StableFluids
             VFB.P1 = AllocateBuffer(1);
             VFB.P2 = AllocateBuffer(1);
 
-            _colorRT1 = AllocateBuffer(4, Screen.width, Screen.height);
-            _colorRT2 = AllocateBuffer(4, Screen.width, Screen.height);
+            _colorRT1 = AllocateBuffer(4, ResolutionX, ResolutionY);
+            _colorRT2 = AllocateBuffer(4, ResolutionX, ResolutionY);
 
             Graphics.Blit(_initial, _colorRT1);
 
@@ -126,17 +129,13 @@ namespace StableFluids
             var dt = Time.deltaTime;
             var dx = 1.0f / ResolutionY;
 
-            //Input point
-            //var input = new Vector2(
-            //    (Input.mousePosition.x - Screen.width * 0.5f) / Screen.height,
-            //    (Input.mousePosition.y - Screen.height * 0.5f) / Screen.height
-            //);
+            float px = _player.transform.position.x;
+            float pz = _player.transform.position.z;
+            float tx = _target.transform.position.x;
+            float tz = _target.transform.position.z;
 
-            //float playerX = (_player.transform.position.x - _plane.transform.position.x + (_plane.transform.position.x / 2)) / _plane.transform.localScale.x;
-            //float playerZ = (_player.transform.position.z - _plane.transform.position.z + (_plane.transform.position.z / 2)) / _plane.transform.localScale.z;
-
-            float playerX = ((_player.transform.position.x - _plane.transform.position.x) * -1 / _plane.transform.lossyScale.x) / 10f;
-            float playerZ = ((_player.transform.position.z - _plane.transform.position.z) * -1 / _plane.transform.lossyScale.z) / 10f;
+            float playerX = (tx - px) / 10f;
+            float playerZ = (tz - pz) / 10f;
 
             var input = new Vector2(
                 playerX,
@@ -222,8 +221,9 @@ namespace StableFluids
             _compute.Dispatch(Kernels.PFinish, ThreadCountX, ThreadCountY, 1);
 
             // Apply the velocity field to the color buffer.
-            var offs = Vector2.one * (Input.GetMouseButton(1) ? 0 : 1e+7f);
-            _shaderSheet.SetVector("_ForceOrigin", input + offs);
+            //var offs = Vector2.one * (Input.GetMouseButton(1) ? 0 : 1e+7f);
+            //_shaderSheet.SetVector("_ForceOrigin", input + offs);
+            _shaderSheet.SetVector("_ForceOrigin", input);
             _shaderSheet.SetFloat("_ForceExponent", _exponent);
             _shaderSheet.SetTexture("_MainTex", _colorRT1);
             _shaderSheet.SetTexture("_VelocityField", VFB.V1);
