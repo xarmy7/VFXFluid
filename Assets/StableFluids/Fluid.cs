@@ -1,7 +1,9 @@
 ﻿// StableFluids - A GPU implementation of Jos Stam's Stable Fluids on Unity
 // https://github.com/keijiro/StableFluids
 
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace StableFluids
 {
@@ -26,6 +28,10 @@ namespace StableFluids
 
         [SerializeField, HideInInspector] ComputeShader _compute;
         [SerializeField, HideInInspector] Shader _shader;
+
+        [SerializeField] Shader _offsetShader;
+
+        private Material _offsetMaterial;
 
         #endregion
 
@@ -70,7 +76,7 @@ namespace StableFluids
             if (componentCount == 1) format = RenderTextureFormat.RHalf;
             if (componentCount == 2) format = RenderTextureFormat.RGHalf;
 
-            if (width  == 0) width  = ResolutionX;
+            if (width == 0) width = ResolutionX;
             if (height == 0) height = ResolutionY;
 
             var rt = new RenderTexture(width, height, 0, format);
@@ -90,7 +96,9 @@ namespace StableFluids
 
         void Start()
         {
-	     if (!_shaderSheet)
+            _offsetMaterial = new Material(_offsetShader);
+
+            if (!_shaderSheet)
                 _shaderSheet = new Material(_shader);
 
             VFB.V1 = AllocateBuffer(2);
@@ -188,7 +196,7 @@ namespace StableFluids
             //    _compute.SetVector("ForceVector", (input - _previousInput) * _force);
             //else
             _compute.SetVector("ForceVector", (input - _previousInput) * _force);
-                //_compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
+            //_compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
 
             _compute.Dispatch(Kernels.Force, ThreadCountX, ThreadCountY, 1);
 
@@ -229,7 +237,7 @@ namespace StableFluids
             _shaderSheet.SetTexture("_VelocityField", VFB.V1);
             Graphics.Blit(_colorRT1, _colorRT2, _shaderSheet, 0);
 
-            
+
 
             // Swap the color buffers.
             var temp = _colorRT1;
@@ -242,6 +250,35 @@ namespace StableFluids
         public Texture GetVelocityField()
         {
             return VFB.V1;
+        }
+
+        public void ResetVelocityField(Vector2 offset)
+        {
+            RenderTexture color = AllocateBuffer(4, _colorRT1.width, _colorRT1.height);
+            Graphics.Blit(_colorRT1, color);
+            RenderTexture velocityField = AllocateBuffer(2, VFB.V1.width, VFB.V1.height);
+            Graphics.Blit(VFB.V1, velocityField);
+
+            float px = _player.transform.position.x;
+            float pz = _player.transform.position.z;
+            float tx = _target.transform.position.x;
+            float tz = _target.transform.position.z;
+
+            float playerX = (tx - px) / 10f;
+            float playerZ = (tz - pz) / 10f;
+
+            var input = new Vector2(
+                playerX,
+                playerZ
+            );
+            _previousInput = input;
+
+            _offsetMaterial.SetVector("_Offset", new Vector4(offset.x, offset.y, 0, 0));
+            Graphics.Blit(velocityField, VFB.V1, _offsetMaterial);
+            Graphics.Blit(color, _colorRT1, _offsetMaterial);
+
+            Destroy(velocityField);
+            Destroy(color);
         }
 
         void OnRenderImage(RenderTexture source, RenderTexture destination)
