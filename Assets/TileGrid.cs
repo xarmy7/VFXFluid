@@ -2,6 +2,7 @@ using StableFluids;
 using UnityEngine;
 using UnityEngine.VFX;
 
+[RequireComponent(typeof(Grid))]
 public class TileGrid : MonoBehaviour
 {
     [SerializeField] private GameObject player;
