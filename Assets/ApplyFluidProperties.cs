@@ -15,9 +15,9 @@ public class ApplyFluidProperties : MonoBehaviour
 
     [SerializeField] private GameObject player;
 
-    public RenderTexture velocityField;
+    [HideInInspector] public RenderTexture velocityField;
 
-    [SerializeField] private RawImage image;
+    [SerializeField] private RawImage velocityFieldVisualizer;
 
     private void OnEnable()
     {
@@ -39,7 +39,8 @@ public class ApplyFluidProperties : MonoBehaviour
 
     private void Update()
     {
-        image.texture = velocityField;
+        if (velocityFieldVisualizer)
+            velocityFieldVisualizer.texture = velocityField;
         effect.SetTexture(velocityFieldProperty, velocityField);
         effect.SetVector3(playerRelativePositionProperty, player.transform.position - transform.position);
     }

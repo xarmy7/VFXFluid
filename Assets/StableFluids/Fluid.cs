@@ -27,7 +27,7 @@ namespace StableFluids
         // plane with the material
         [SerializeField] GameObject _target;
 
-        [SerializeField] TileGrid grid;
+        [SerializeField] FollowObjectGrid grid;
 
         #endregion
 
@@ -55,13 +55,14 @@ namespace StableFluids
             public const int PFinish = 3;
             public const int Jacobi1 = 4;
             public const int Jacobi2 = 5;
+            public const int ForceNoCollision = 6;
         }
 
         int ThreadCountX { get { return (_resolution + 7) / 8; } }
         int ThreadCountY { get { return (_resolution + 7) / 8; } }
 
-        int ResolutionX { get { return ThreadCountX * 8; } }
-        int ResolutionY { get { return ThreadCountY * 8; } }
+        public int ResolutionX { get { return ThreadCountX * 8; } }
+        public int ResolutionY { get { return ThreadCountY * 8; } }
 
         // Vector field buffers
         static class VFB
@@ -155,6 +156,8 @@ namespace StableFluids
 #if UNITY_IOS
             Application.targetFrameRate = 60;
 #endif
+
+            InitializeInputBuffer();
         }
 
         void OnDestroy()
@@ -171,11 +174,8 @@ namespace StableFluids
             Destroy(_colorRT2);
         }
 
-        void Update()
+        Vector2 UpdateInput()
         {
-            var dt = Time.deltaTime;
-            var dx = 1.0f / ResolutionY;
-
             float px = _player.transform.position.x;
             float pz = _player.transform.position.z;
             float tx = _target.transform.position.x;
@@ -189,6 +189,15 @@ namespace StableFluids
                 playerZ
             );
 
+            return input;
+        }
+
+        void LateUpdate()
+        {
+            var dt = Time.deltaTime;
+            var dx = 1.0f / ResolutionY;
+
+            var input = UpdateInput();
 
             if (_player == null) return;
             if (_compute == null) return;
@@ -221,22 +230,16 @@ namespace StableFluids
                 _compute.Dispatch(Kernels.Jacobi2, ThreadCountX, ThreadCountY, 1);
             }
 
+            UpdateInputBuffer(dt);
+
             // Add external force
-            _compute.SetVector("ForceOrigin", input);
-            _compute.SetFloat("ForceExponent", _exponent);
+            //_compute.SetVector("ForceOrigin", input);
+            //_compute.SetFloat("ForceExponent", _exponent);
+            _compute.SetBuffer(Kernels.Force, "fluidInput", _inputBuffer);
+            _compute.SetInt("FluidInputCount", _inputBufferData.Length);
             _compute.SetTexture(Kernels.Force, "W_in", VFB.V2);
             _compute.SetTexture(Kernels.Force, "W_out", VFB.V3);
-
-            //if (Input.GetMouseButton(1))
-            //    // Random push
-            //    _compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
-            //else if (Input.GetMouseButton(0))
-            //    // Mouse drag
-            //    _compute.SetVector("ForceVector", (input - _previousInput) * _force);
-            //else
-            _compute.SetVector("ForceVector", (input - _previousInput) * _force);
-            //_compute.SetVector("ForceVector", Random.insideUnitCircle * _force * 0.025f);
-
+            //_compute.SetVector("ForceVector", (input - _previousInput) * _force);
             _compute.Dispatch(Kernels.Force, ThreadCountX, ThreadCountY, 1);
 
             // Projection setup
@@ -272,11 +275,10 @@ namespace StableFluids
             //_shaderSheet.SetVector("_ForceOrigin", input + offs);
             _shaderSheet.SetVector("_ForceOrigin", input);
             _shaderSheet.SetFloat("_ForceExponent", _exponent);
-            _shaderSheet.SetTexture("_MainTex", _colorRT1);
+            //_shaderSheet.SetTexture("_MainTex", _colorRT1);
+            _shaderSheet.SetTexture("_MainTex", VFB.V1);
             _shaderSheet.SetTexture("_VelocityField", VFB.V1);
             Graphics.Blit(_colorRT1, _colorRT2, _shaderSheet, 0);
-
-
 
             // Swap the color buffers.
             var temp = _colorRT1;
@@ -286,21 +288,22 @@ namespace StableFluids
             _previousInput = input;
         }
 
-
         void UpdateData(int index, Collider collider, float deltaTime)
         {
             FluidInputData d = _inputBufferData[index];
             Vector3 position = collider.transform.position;
 
-            if (deltaTime == 0f) _previousPositions[index] = position;
+            if (deltaTime == 0f)
+                _previousPositions[index] = position;
 
             // Compute position in 2D
-            Vector2 pos2d = ProjectTo2DGrid(position, transform.position, this._resolution, gridFollowPlayer.GridStepSize);
-            pos2d.x = pos2d.x + 0.5f;
-            pos2d.y = pos2d.y + 0.5f;
+            Vector3 pos3d = (transform.position - position) / 10f;
+            Vector2 pos2d = grid.GetCellPosition2D(position - transform.position);
+            pos2d = new Vector2(pos3d.x, pos3d.z);
 
             // Compute velocity in 2D
-            Vector2 vel2d = ProjectTo2DGrid(_previousPositions[index] - position, Vector3.zero, this._resolution, gridFollowPlayer.GridStepSize);
+            Vector3 vel3d = _previousPositions[index] - position;
+            Vector2 vel2d = new Vector2(vel3d.x, vel3d.z);
             _previousPositions[index] = position;
 
             // Compute radius in 2D
@@ -310,13 +313,15 @@ namespace StableFluids
             else if (collider is SphereCollider)
                 radius = ((SphereCollider)collider).radius * collider.transform.localScale.x;
 
-            d.radius = this._radiusScale * radius / (this._resolution * gridFollowPlayer.GridStepSize);
+            d.radius = radius * 0.1f;// _radiusScale * radius;// / (_resolution * grid.GetCellSize().x);
 
             // Only store velocity for update pass
             if (deltaTime > 0)
-                d.velocity = vel2d * this._velocityScale;
+                d.velocity = vel2d * _velocityScale;
             else
                 d.velocity = Vector2.zero;
+
+            Debug.Log(collider + " : " + d.velocity + ", " + d.radius);
 
             // Store position
             d.position = pos2d;
@@ -331,11 +336,10 @@ namespace StableFluids
 
         void UpdateInputBuffer(float deltaTime)
         {
-            if (characterController == null) _inputBufferData[0] = defaultData;
+            if (characterController == null)
+                _inputBufferData[0] = defaultData;
             else
-            {
                 UpdateData(0, characterController, deltaTime);
-            }
 
             for (int i = 0; i < colliders.Length; i++)
             {
@@ -345,12 +349,7 @@ namespace StableFluids
             _inputBuffer.SetData(_inputBufferData);
         }
 
-        Vector2 ProjectTo2DGrid(Vector3 position, Vector3 gridPosition, float gridResolution, float gridStepSize)
-        {
-            return new Vector2(position.x - gridPosition.x, position.z - gridPosition.z) / (this._resolution * gridFollowPlayer.GridStepSize);
-        }
-
- public void RetrieveVelocityField(ref RenderTexture rt, Vector2 offset)
+        public void RetrieveVelocityField(ref RenderTexture rt, Vector2 offset)
         {
             _offsetMaterial.SetVector("_Offset", new Vector4(offset.x, offset.y, 0, 0));
             Graphics.Blit(GetVelocityField(), rt, _offsetMaterial);
@@ -363,19 +362,7 @@ namespace StableFluids
             RenderTexture velocityField = AllocateBuffer(2, VFB.V1.width, VFB.V1.height);
             Graphics.Blit(VFB.V1, velocityField);
 
-            float px = _player.transform.position.x;
-            float pz = _player.transform.position.z;
-            float tx = _target.transform.position.x;
-            float tz = _target.transform.position.z;
-
-            float playerX = (tx - px) / 10f;
-            float playerZ = (tz - pz) / 10f;
-
-            var input = new Vector2(
-                playerX,
-                playerZ
-            );
-            _previousInput = input;
+            _previousInput = UpdateInput();
 
             _offsetMaterial.SetVector("_Offset", new Vector4(offset.x, offset.y, 0, 0));
             Graphics.Blit(velocityField, VFB.V1, _offsetMaterial);

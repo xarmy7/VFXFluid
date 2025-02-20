@@ -3,16 +3,15 @@ using UnityEngine;
 using UnityEngine.VFX;
 
 [RequireComponent(typeof(Grid))]
-public class TileGrid : MonoBehaviour
+public class FollowObjectGrid : MonoBehaviour
 {
-    [SerializeField] private GameObject player;
+    [SerializeField] private GameObject targetObject;
     [SerializeField] private GameObject tiledObject;
+
     [SerializeField] private Fluid fluidSimulator;
-    [SerializeField] private ApplyFluidProperties properties;
+    [SerializeField] private ApplyFluidProperties fluidProperties;
 
     [SerializeField] private VisualEffect effect;
-
-    static readonly int velocityFieldProperty = Shader.PropertyToID("_VelocityField");
 
     private Grid grid;
 
@@ -26,12 +25,23 @@ public class TileGrid : MonoBehaviour
         return grid.cellSize;
     }
 
+    public Vector3Int GetCellPosition(Vector3 pos)
+    {
+        return grid.WorldToCell(pos);
+    }
+
+    public Vector2 GetCellPosition2D(Vector3 pos)
+    {
+        Vector3Int cellPos = grid.WorldToCell(pos);
+        return new Vector2(cellPos.x, cellPos.z);
+    }
+
     private void Update()
     {
         var selfPos = grid.WorldToCell(tiledObject.transform.position);
-        var playerPos = grid.WorldToCell(player.transform.position);
+        var playerPos = grid.WorldToCell(targetObject.transform.position);
 
-        fluidSimulator.RetrieveVelocityField(ref properties.velocityField, Vector2.zero);
+        fluidSimulator.RetrieveVelocityField(ref fluidProperties.velocityField, Vector2.zero);
 
         if (selfPos.x == playerPos.x && selfPos.z == playerPos.z)
             return;
