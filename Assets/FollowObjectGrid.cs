@@ -13,6 +13,10 @@ public class FollowObjectGrid : MonoBehaviour
 
     [SerializeField] private VisualEffect effect;
 
+    [SerializeField] private bool FollowX = true;
+    [SerializeField] private bool FollowY = true;
+    [SerializeField] private bool FollowZ = true;
+
     private Grid grid;
 
     private void Start()
@@ -45,13 +49,17 @@ public class FollowObjectGrid : MonoBehaviour
 
         if (selfPos.x == playerPos.x && selfPos.z == playerPos.z)
             return;
-        
-        playerPos.y = (int)(transform.position.y);
-        tiledObject.transform.position = playerPos;
+
+        Vector3 newTargetPos = new Vector3(
+            FollowX ? playerPos.x : tiledObject.transform.position.x,
+            FollowY ? playerPos.y : tiledObject.transform.position.y,
+            FollowZ ? playerPos.z : tiledObject.transform.position.z
+            );
+        tiledObject.transform.position = newTargetPos;
 
         var newSelfPos = grid.WorldToCell(tiledObject.transform.position);
         Vector3Int diff = newSelfPos - selfPos;
 
-        fluidSimulator.SnapVelocityField(new Vector2(diff.x * -0.1f, diff.z * -0.1f));
+        fluidSimulator.SnapVelocityField(new Vector2(diff.x * -fluidSimulator.planeScale, diff.z * -fluidSimulator.planeScale));
     }
 }

@@ -1,5 +1,4 @@
 using StableFluids;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.VFX;

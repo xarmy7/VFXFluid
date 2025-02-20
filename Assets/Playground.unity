@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &160363526
+--- !u!1 &519982399
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,50 +127,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 160363528}
-  - component: {fileID: 160363527}
-  - component: {fileID: 160363529}
+  - component: {fileID: 519982402}
+  - component: {fileID: 519982401}
+  - component: {fileID: 519982400}
   m_Layer: 0
   m_Name: Tiler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
---- !u!156049354 &160363527
-Grid:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 160363526}
-  m_Enabled: 1
-  m_CellSize: {x: 1, y: 1, z: 1}
-  m_CellGap: {x: 0, y: 0, z: 0}
-  m_CellLayout: 0
-  m_CellSwizzle: 0
---- !u!4 &160363528
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 160363526}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &160363529
+--- !u!114 &519982400
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 160363526}
+  m_GameObject: {fileID: 519982399}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b3e763d47a2afe74fab8197b90b00537, type: 3}
@@ -181,6 +154,36 @@ MonoBehaviour:
   fluidSimulator: {fileID: 823350952}
   fluidProperties: {fileID: 719230849}
   effect: {fileID: 719230848}
+  FollowX: 1
+  FollowY: 0
+  FollowZ: 1
+--- !u!156049354 &519982401
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519982399}
+  m_Enabled: 1
+  m_CellSize: {x: 1, y: 1, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
+--- !u!4 &519982402
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519982399}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &542508511
 GameObject:
   m_ObjectHideFlags: 0
@@ -679,7 +682,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d647a13c8315841beca299605a8823, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterController: {fileID: 1762682264}
   _resolution: 512
   _viscosity: 0.000001
   _force: 300
@@ -687,16 +689,17 @@ MonoBehaviour:
   _radiusScale: 2.2
   _velocityScale: 1.4
   _initial: {fileID: 2800000, guid: ded36cca018f2e741aa6a4c55495a7f0, type: 3}
+  characterController: {fileID: 1762682264}
   colliders:
   - {fileID: 1494436531}
   - {fileID: 1941875631}
-  _player: {fileID: 984459598}
-  _target: {fileID: 823350947}
-  grid: {fileID: 160363529}
+  grid: {fileID: 519982400}
   _compute: {fileID: 7200000, guid: cd1f70f1f6b4beb45a02e1c088f0a109, type: 3}
   _shader: {fileID: 4800000, guid: 0486f5f9fa757fa49a5b9613050036fb, type: 3}
   _offsetShader: {fileID: 4800000, guid: fa404de7644dffa45beb6d3d29e6731a, type: 3}
+  planeScale: 0.1
   _shaderSheet: {fileID: 2100000, guid: e09a119bae3d37c4baa95b669d075d85, type: 2}
+  DisplayVelocityFieldTex: 1
 --- !u!1 &874605735
 GameObject:
   m_ObjectHideFlags: 0
@@ -2184,7 +2187,7 @@ SceneRoots:
   - {fileID: 1979352518}
   - {fileID: 746329221}
   - {fileID: 823350951}
-  - {fileID: 160363528}
+  - {fileID: 519982402}
   - {fileID: 584999703}
   - {fileID: 1494436534}
   - {fileID: 1941875634}

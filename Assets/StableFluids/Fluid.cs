@@ -2,10 +2,7 @@
 // https://github.com/keijiro/StableFluids
 
 using System;
-using Unity.Mathematics;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace StableFluids
 {
@@ -13,7 +10,6 @@ namespace StableFluids
     {
         #region Editable attributes
 
-        [SerializeField] CharacterController characterController;
         [SerializeField] int _resolution = 512;
         [SerializeField] float _viscosity = 1e-6f;
         [Obsolete, SerializeField] float _force = 300;
@@ -21,11 +17,10 @@ namespace StableFluids
         [Obsolete, SerializeField] float _radiusScale = 2.2f;
         [SerializeField] float _velocityScale = 1.4f;
         [SerializeField] Texture2D _initial;
-        [SerializeField] Collider[] colliders;
 
-        [Obsolete, SerializeField] GameObject _player;
-        // plane with the material
-        [Obsolete, SerializeField] GameObject _target;
+        // colliders
+        [SerializeField] CharacterController characterController;
+        [SerializeField] Collider[] colliders;
 
         [SerializeField] FollowObjectGrid grid;
 
@@ -40,12 +35,18 @@ namespace StableFluids
 
         private Material _offsetMaterial;
 
+        [HideInInspector] public float planeScale = 0.1f;
+
         #endregion
 
         #region Private members
 
         [SerializeField] private Material _shaderSheet;
         [Obsolete] private Vector2 _previousInput;
+
+        private bool MaterialWasSetInEditor = false;
+
+        [SerializeField] private bool DisplayVelocityFieldTex = true;
 
         static class Kernels
         {
@@ -136,10 +137,14 @@ namespace StableFluids
 
         void Start()
         {
+            planeScale = transform.localScale.x * 0.1f;
+
             _offsetMaterial = new Material(_offsetShader);
 
             if (!_shaderSheet)
                 _shaderSheet = new Material(_shader);
+            else
+                MaterialWasSetInEditor = true;
 
             VFB.V1 = AllocateBuffer(2);
             VFB.V2 = AllocateBuffer(2);
@@ -162,7 +167,8 @@ namespace StableFluids
 
         void OnDestroy()
         {
-            Destroy(_shaderSheet);
+            if (!MaterialWasSetInEditor)
+                Destroy(_shaderSheet);
 
             Destroy(VFB.V1);
             Destroy(VFB.V2);
@@ -177,13 +183,15 @@ namespace StableFluids
         [Obsolete("Input with player gameobject only")]
         Vector2 UpdateInput()
         {
-            float px = _player.transform.position.x;
-            float pz = _player.transform.position.z;
-            float tx = _target.transform.position.x;
-            float tz = _target.transform.position.z;
+            // player
+            float px = characterController.transform.position.x;
+            float pz = characterController.transform.position.z;
+            // target (self)
+            float tx = transform.position.x;
+            float tz = transform.position.z;
 
-            float playerX = (tx - px) / 10f;
-            float playerZ = (tz - pz) / 10f;
+            float playerX = (tx - px) * planeScale;
+            float playerZ = (tz - pz) * planeScale;
 
             var input = new Vector2(
                 playerX,
@@ -200,7 +208,6 @@ namespace StableFluids
 
             var input = UpdateInput();
 
-            if (_player == null) return;
             if (_compute == null) return;
 
             // Common variables
@@ -233,14 +240,15 @@ namespace StableFluids
 
             UpdateInputBuffer(dt);
 
+            // Add external force (legacy technique)
+            _compute.SetVector("ForceOrigin", input);
+            _compute.SetFloat("ForceExponent", _exponent);
+            _compute.SetVector("ForceVector", (input - _previousInput) * _force);
             // Add external force
-            //_compute.SetVector("ForceOrigin", input);
-            //_compute.SetFloat("ForceExponent", _exponent);
             _compute.SetBuffer(Kernels.Force, "fluidInput", _inputBuffer);
             _compute.SetInt("FluidInputCount", _inputBufferData.Length);
             _compute.SetTexture(Kernels.Force, "W_in", VFB.V2);
             _compute.SetTexture(Kernels.Force, "W_out", VFB.V3);
-            //_compute.SetVector("ForceVector", (input - _previousInput) * _force);
             _compute.Dispatch(Kernels.Force, ThreadCountX, ThreadCountY, 1);
 
             // Projection setup
@@ -276,8 +284,7 @@ namespace StableFluids
             //_shaderSheet.SetVector("_ForceOrigin", input + offs);
             _shaderSheet.SetVector("_ForceOrigin", input);
             _shaderSheet.SetFloat("_ForceExponent", _exponent);
-            //_shaderSheet.SetTexture("_MainTex", _colorRT1);
-            _shaderSheet.SetTexture("_MainTex", VFB.V1);
+            _shaderSheet.SetTexture("_MainTex", DisplayVelocityFieldTex ? VFB.V1 : _colorRT1);
             _shaderSheet.SetTexture("_VelocityField", VFB.V1);
             Graphics.Blit(_colorRT1, _colorRT2, _shaderSheet, 0);
 
@@ -298,7 +305,7 @@ namespace StableFluids
                 _previousPositions[index] = position;
 
             // Compute position in 2D
-            Vector3 pos3d = (transform.position - position) / 10f;
+            Vector3 pos3d = (transform.position - position) * planeScale;
             Vector2 pos2d = grid.GetCellPosition2D(position - transform.position);
             pos2d = new Vector2(pos3d.x, pos3d.z);
 
@@ -314,7 +321,7 @@ namespace StableFluids
             else if (collider is SphereCollider)
                 radius = ((SphereCollider)collider).radius * collider.transform.localScale.x;
 
-            d.radius = radius * 0.1f;
+            d.radius = radius * planeScale;
 
             // Only store velocity for update pass
             if (deltaTime > 0)
