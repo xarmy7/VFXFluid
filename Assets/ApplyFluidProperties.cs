@@ -12,6 +12,7 @@ public class ApplyFluidProperties : MonoBehaviour
     private static readonly int velocityFieldProperty = Shader.PropertyToID("VelocityField");
     private static readonly int playerRelativePositionProperty = Shader.PropertyToID("PlayerRelativePosition");
     private static readonly int planeOffsetProperty = Shader.PropertyToID("PlaneOffset");
+    private static readonly int planeScaleProperty = Shader.PropertyToID("PlaneScale");
 
     [SerializeField] private GameObject player;
 
@@ -36,7 +37,7 @@ public class ApplyFluidProperties : MonoBehaviour
         effect.SetTexture(velocityFieldProperty, velocityField);
 
         effect.SetVector3(playerRelativePositionProperty, player.transform.position - transform.position);
-
         effect.SetVector3(planeOffsetProperty, fluidSimulator.transform.position);
+        effect.SetFloat(planeScaleProperty, fluidSimulator.transform.localScale.x * 10);
     }
 }

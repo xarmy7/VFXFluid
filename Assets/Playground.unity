@@ -384,7 +384,7 @@ Transform:
   m_GameObject: {fileID: 719230845}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.20000005, y: 0.23500001, z: 4}
+  m_LocalPosition: {x: 0, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -700,7 +700,7 @@ MonoBehaviour:
   _offsetShader: {fileID: 4800000, guid: fa404de7644dffa45beb6d3d29e6731a, type: 3}
   planeScale: 0.1
   _shaderSheet: {fileID: 2100000, guid: e09a119bae3d37c4baa95b669d075d85, type: 2}
-  DisplayVelocityFieldTex: 0
+  DisplayVelocityFieldTex: 1
 --- !u!1 &874605735
 GameObject:
   m_ObjectHideFlags: 0
