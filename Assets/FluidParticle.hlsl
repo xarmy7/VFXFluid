@@ -7,6 +7,6 @@ void ApplyVelocityField(inout VFXAttributes attributes, VFXSampler2D velocityFie
     float4 v = velocityField.t.SampleLevel(velocityField.s, pos, 0.0);
         
     attributes.color = abs(v);
-    //attributes.position.y = length(v.rgb);
     attributes.velocity = float3(advection * -v.r, 0.0, advection * -v.g);
+    attributes.position.y = max(0.0, length(normalize(abs(v)).rgb));
 }
