@@ -8,6 +8,16 @@
 #pragma kernel Jacobi1
 #pragma kernel Jacobi2
 
+struct FluidInputData
+{
+    float2 position;
+    float2 velocity;
+    float radius;
+};
+
+StructuredBuffer<FluidInputData> fluidInput;
+int FluidInputCount;
+
 // Common parameter
 float Time;
 float DeltaTime;
@@ -86,6 +96,30 @@ void PSetup(uint2 tid : SV_DispatchThreadID)
                      W_in[tid + int2(0, 1)].y - W_in[tid - int2(0, 1)].y) * dim.y / 2;
 
     P_out[tid] = 0;
+}
+
+[numthreads(8, 8, 1)]
+void Force(uint tid : SV_DispatchThreadID)
+{
+    uint2 dim;
+    W_out.GetDimensions(dim.x, dim.y);
+    
+    float2 force = float2(0.0, 0.0);
+    
+    for (int i = 0; i < FluidInputCount; i++)
+    {
+        FluidInputData data = fluidInput[i];
+        
+        float2 pos = ((float2) tid) / dim;
+        float d = distance(pos, data.position);
+        float mask = step(d, data.radius);
+        float l = length(data.velocity);
+        
+        float2 expand = normalize(pos - data.position) * mask * l;
+        force += (mask * data.velocity) + (expand);
+    }
+        W_out = W_in[tid] + force;
+
 }
 
 // Finishing for Project step (divergence free field calculation)

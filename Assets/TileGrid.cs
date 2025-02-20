@@ -16,9 +16,14 @@ public class TileGrid : MonoBehaviour
         grid = GetComponent<Grid>();
     }
 
+    public Vector3 GetCellSize()
+    {
+        return grid.cellSize;
+    }
+
     private void Update()
     {
-        var selfPos = grid.WorldToCell(tiledObject.transform.position);
+        /*var selfPos = grid.WorldToCell(tiledObject.transform.position);
         var playerPos = grid.WorldToCell(player.transform.position);
 
         if (selfPos.x == playerPos.x && selfPos.z == playerPos.z)
@@ -30,6 +35,6 @@ public class TileGrid : MonoBehaviour
         var newSelfPos = grid.WorldToCell(tiledObject.transform.position);
         Vector3Int diff = newSelfPos - selfPos;
 
-        fluidSimulator.ResetVelocityField(new Vector2(diff.x * -0.1f, diff.z * -0.1f));
+        fluidSimulator.ResetVelocityField(new Vector2(diff.x * -0.1f, diff.z * -0.1f));*/
     }
 }

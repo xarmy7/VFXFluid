@@ -1,6 +1,7 @@
 ﻿// StableFluids - A GPU implementation of Jos Stam's Stable Fluids on Unity
 // https://github.com/keijiro/StableFluids
 
+using Unity.Mathematics;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -11,16 +12,22 @@ namespace StableFluids
     {
         #region Editable attributes
 
+        [SerializeField] CharacterController characterController;
         [SerializeField] int _resolution = 512;
         [SerializeField] float _viscosity = 1e-6f;
         [SerializeField] float _force = 300;
         [SerializeField] float _exponent = 200;
+        [SerializeField] float _radiusScale = 2.2f;
+        [SerializeField] float _velocityScale = 1.4f;
         [SerializeField] Texture2D _initial;
+        [SerializeField] Collider[] colliders;
 
 
         [SerializeField] GameObject _player;
         // plane with the material
         [SerializeField] GameObject _target;
+
+        [SerializeField] TileGrid grid;
 
         #endregion
 
@@ -89,6 +96,38 @@ namespace StableFluids
 
         #region MonoBehaviour implementation
 
+        struct FluidInputData
+        {
+            public Vector2 position;
+            public Vector2 velocity;
+            public float radius;
+        }
+
+        static readonly FluidInputData defaultData = new FluidInputData()
+        {
+            position = Vector2.zero,
+            velocity = Vector2.zero,
+            radius = 0f
+        };
+
+        GraphicsBuffer _inputBuffer;
+        FluidInputData[] _inputBufferData;
+
+        Vector3[] _previousPositions;
+
+        void InitializeInputBuffer()
+        {
+            if (_inputBuffer == null)
+            {
+                _inputBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, colliders.Length + 1, sizeof(float) * 5);
+                _inputBufferData = new FluidInputData[colliders.Length + 1];
+                _previousPositions = new Vector3[colliders.Length + 1];
+            }
+
+            UpdateInputBuffer(0f);
+        }
+
+
         void OnValidate()
         {
             _resolution = Mathf.Max(_resolution, 8);
@@ -120,7 +159,7 @@ namespace StableFluids
 
         void OnDestroy()
         {
-            Destroy(_shaderSheet);
+            //Destroy(_shaderSheet);
 
             Destroy(VFB.V1);
             Destroy(VFB.V2);
@@ -247,9 +286,68 @@ namespace StableFluids
             _previousInput = input;
         }
 
+
+        void UpdateData(int index, Collider collider, float deltaTime)
+        {
+            FluidInputData d = _inputBufferData[index];
+            Vector3 position = collider.transform.position;
+
+            if (deltaTime == 0f) _previousPositions[index] = position;
+
+            // Compute position in 2D
+            Vector2 pos2d = ProjectTo2DGrid(position, transform.position, this._resolution, gridFollowPlayer.GridStepSize);
+            pos2d.x = pos2d.x + 0.5f;
+            pos2d.y = pos2d.y + 0.5f;
+
+            // Compute velocity in 2D
+            Vector2 vel2d = ProjectTo2DGrid(_previousPositions[index] - position, Vector3.zero, this._resolution, gridFollowPlayer.GridStepSize);
+            _previousPositions[index] = position;
+
+            // Compute radius in 2D
+            float radius = 0f;
+            if (collider is CharacterController)
+                radius = ((CharacterController)collider).radius;
+            else if (collider is SphereCollider)
+                radius = ((SphereCollider)collider).radius * collider.transform.localScale.x;
+
+            d.radius = this._radiusScale * radius / (this._resolution * gridFollowPlayer.GridStepSize);
+
+            // Only store velocity for update pass
+            if (deltaTime > 0)
+                d.velocity = vel2d * this._velocityScale;
+            else
+                d.velocity = Vector2.zero;
+
+            // Store position
+            d.position = pos2d;
+
+            _inputBufferData[index] = d;
+        }
+
         public Texture GetVelocityField()
         {
             return VFB.V1;
+        }
+
+        void UpdateInputBuffer(float deltaTime)
+        {
+            if (characterController == null) _inputBufferData[0] = defaultData;
+            else
+            {
+                UpdateData(0, characterController, deltaTime);
+            }
+
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                UpdateData(i + 1, colliders[i], deltaTime);
+            }
+
+            _inputBuffer.SetData(_inputBufferData);
+        }
+
+        Vector2 ProjectTo2DGrid(Vector3 position, Vector3 gridPosition, float gridResolution, float gridStepSize)
+        {
+            return new Vector2(position.x - gridPosition.x, position.z - gridPosition.z) / (this._resolution * gridFollowPlayer.GridStepSize);
         }
 
         public void ResetVelocityField(Vector2 offset)
