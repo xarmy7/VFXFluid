@@ -1,6 +1,7 @@
 ﻿// StableFluids - A GPU implementation of Jos Stam's Stable Fluids on Unity
 // https://github.com/keijiro/StableFluids
 
+using System;
 using Unity.Mathematics;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,17 +16,16 @@ namespace StableFluids
         [SerializeField] CharacterController characterController;
         [SerializeField] int _resolution = 512;
         [SerializeField] float _viscosity = 1e-6f;
-        [SerializeField] float _force = 300;
-        [SerializeField] float _exponent = 200;
-        [SerializeField] float _radiusScale = 2.2f;
+        [Obsolete, SerializeField] float _force = 300;
+        [Obsolete, SerializeField] float _exponent = 200;
+        [Obsolete, SerializeField] float _radiusScale = 2.2f;
         [SerializeField] float _velocityScale = 1.4f;
         [SerializeField] Texture2D _initial;
         [SerializeField] Collider[] colliders;
 
-
-        [SerializeField] GameObject _player;
+        [Obsolete, SerializeField] GameObject _player;
         // plane with the material
-        [SerializeField] GameObject _target;
+        [Obsolete, SerializeField] GameObject _target;
 
         [SerializeField] FollowObjectGrid grid;
 
@@ -36,7 +36,7 @@ namespace StableFluids
         [SerializeField, HideInInspector] ComputeShader _compute;
         [SerializeField, HideInInspector] Shader _shader;
 
-        [SerializeField] Shader _offsetShader;
+        [SerializeField] private Shader _offsetShader;
 
         private Material _offsetMaterial;
 
@@ -44,8 +44,8 @@ namespace StableFluids
 
         #region Private members
 
-        [SerializeField] Material _shaderSheet;
-        Vector2 _previousInput;
+        [SerializeField] private Material _shaderSheet;
+        [Obsolete] private Vector2 _previousInput;
 
         static class Kernels
         {
@@ -174,6 +174,7 @@ namespace StableFluids
             Destroy(_colorRT2);
         }
 
+        [Obsolete("Input with player gameobject only")]
         Vector2 UpdateInput()
         {
             float px = _player.transform.position.x;
@@ -313,15 +314,13 @@ namespace StableFluids
             else if (collider is SphereCollider)
                 radius = ((SphereCollider)collider).radius * collider.transform.localScale.x;
 
-            d.radius = radius * 0.1f;// _radiusScale * radius;// / (_resolution * grid.GetCellSize().x);
+            d.radius = radius * 0.1f;
 
             // Only store velocity for update pass
             if (deltaTime > 0)
                 d.velocity = vel2d * _velocityScale;
             else
                 d.velocity = Vector2.zero;
-
-            Debug.Log(collider + " : " + d.velocity + ", " + d.radius);
 
             // Store position
             d.position = pos2d;

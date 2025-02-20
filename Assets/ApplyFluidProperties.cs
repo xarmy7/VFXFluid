@@ -16,7 +16,6 @@ public class ApplyFluidProperties : MonoBehaviour
     [SerializeField] private GameObject player;
 
     [HideInInspector] public RenderTexture velocityField;
-
     [SerializeField] private RawImage velocityFieldVisualizer;
 
     private void OnEnable()
@@ -26,7 +25,7 @@ public class ApplyFluidProperties : MonoBehaviour
 
     private void Start()
     {
-        velocityField = new RenderTexture(512, 512, 1);
+        velocityField = new RenderTexture(fluidSimulator.ResolutionX, fluidSimulator.ResolutionY, 1);
 
         effect.Reinit();
         effect.Play();

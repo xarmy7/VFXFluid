@@ -47,6 +47,7 @@ Shader "Unlit/OffsetTexture"
 
             fixed4 frag (v2f i) : SV_Target
             {
+                // TODO : do offset in compute shader instead
                 fixed4 col = tex2D(_MainTex, i.uv + _Offset.xy);
                 return col;
             }
