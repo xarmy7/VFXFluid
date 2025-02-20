@@ -11,10 +11,10 @@ public class ApplyFluidProperties : MonoBehaviour
     private VisualEffect effect;
     private static readonly int velocityFieldProperty = Shader.PropertyToID("VelocityField");
     private static readonly int playerRelativePositionProperty = Shader.PropertyToID("PlayerRelativePosition");
+    private static readonly int planeOffsetProperty = Shader.PropertyToID("PlaneOffset");
 
     [SerializeField] private GameObject player;
 
-    [HideInInspector] public RenderTexture velocityField;
     [SerializeField] private RawImage velocityFieldVisualizer;
 
     private void OnEnable()
@@ -24,22 +24,19 @@ public class ApplyFluidProperties : MonoBehaviour
 
     private void Start()
     {
-        velocityField = new RenderTexture(fluidSimulator.ResolutionX, fluidSimulator.ResolutionY, 1);
-
         effect.Reinit();
         effect.Play();
     }
 
-    private void OnDisable()
-    {
-        Destroy(velocityField);
-    }
-
     private void Update()
     {
+        Texture velocityField = fluidSimulator.GetVelocityField();
         if (velocityFieldVisualizer)
             velocityFieldVisualizer.texture = velocityField;
         effect.SetTexture(velocityFieldProperty, velocityField);
+
         effect.SetVector3(playerRelativePositionProperty, player.transform.position - transform.position);
+
+        effect.SetVector3(planeOffsetProperty, fluidSimulator.transform.position);
     }
 }

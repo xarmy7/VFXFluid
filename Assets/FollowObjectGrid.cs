@@ -45,8 +45,6 @@ public class FollowObjectGrid : MonoBehaviour
         var selfPos = grid.WorldToCell(tiledObject.transform.position);
         var playerPos = grid.WorldToCell(targetObject.transform.position);
 
-        fluidSimulator.RetrieveVelocityField(ref fluidProperties.velocityField, Vector2.zero);
-
         if (selfPos.x == playerPos.x && selfPos.z == playerPos.z)
             return;
 

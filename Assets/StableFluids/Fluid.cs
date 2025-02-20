@@ -355,12 +355,6 @@ namespace StableFluids
             _inputBuffer.SetData(_inputBufferData);
         }
 
-        public void RetrieveVelocityField(ref RenderTexture rt, Vector2 offset)
-        {
-            _offsetMaterial.SetVector("_Offset", new Vector4(offset.x, offset.y, 0, 0));
-            Graphics.Blit(GetVelocityField(), rt, _offsetMaterial);
-        }
-
         public void SnapVelocityField(Vector2 offset)
         {
             RenderTexture color = AllocateBuffer(4, _colorRT1.width, _colorRT1.height);

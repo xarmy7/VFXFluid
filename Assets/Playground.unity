@@ -484,7 +484,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fluidSimulator: {fileID: 823350952}
-  player: {fileID: 984459598}
+  player: {fileID: 823350947}
   velocityField: {fileID: 0}
   velocityFieldVisualizer: {fileID: 1005045240}
 --- !u!1001 &746329221
@@ -699,7 +699,7 @@ MonoBehaviour:
   _offsetShader: {fileID: 4800000, guid: fa404de7644dffa45beb6d3d29e6731a, type: 3}
   planeScale: 0.1
   _shaderSheet: {fileID: 2100000, guid: e09a119bae3d37c4baa95b669d075d85, type: 2}
-  DisplayVelocityFieldTex: 1
+  DisplayVelocityFieldTex: 0
 --- !u!1 &874605735
 GameObject:
   m_ObjectHideFlags: 0
