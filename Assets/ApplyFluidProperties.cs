@@ -1,6 +1,7 @@
 using StableFluids;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.VFX;
 
 [RequireComponent(typeof(VisualEffect))]
@@ -14,6 +15,10 @@ public class ApplyFluidProperties : MonoBehaviour
 
     [SerializeField] private GameObject player;
 
+    public RenderTexture velocityField;
+
+    [SerializeField] private RawImage image;
+
     private void OnEnable()
     {
         effect = GetComponent<VisualEffect>();
@@ -21,13 +26,20 @@ public class ApplyFluidProperties : MonoBehaviour
 
     private void Start()
     {
+        velocityField = new RenderTexture(512, 512, 1);
+
         effect.Reinit();
         effect.Play();
     }
 
+    private void OnDisable()
+    {
+        Destroy(velocityField);
+    }
+
     private void Update()
     {
-        Texture velocityField = fluidSimulator.GetVelocityField();
+        image.texture = velocityField;
         effect.SetTexture(velocityFieldProperty, velocityField);
         effect.SetVector3(playerRelativePositionProperty, player.transform.position - transform.position);
     }

@@ -1,11 +1,15 @@
 using StableFluids;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class TileGrid : MonoBehaviour
 {
     [SerializeField] private GameObject player;
     [SerializeField] private GameObject tiledObject;
     [SerializeField] private Fluid fluidSimulator;
+    [SerializeField] private ApplyFluidProperties properties;
+
+    [SerializeField] private VisualEffect effect;
 
     static readonly int velocityFieldProperty = Shader.PropertyToID("_VelocityField");
 

@@ -159,7 +159,7 @@ namespace StableFluids
 
         void OnDestroy()
         {
-            //Destroy(_shaderSheet);
+            Destroy(_shaderSheet);
 
             Destroy(VFB.V1);
             Destroy(VFB.V2);
@@ -350,7 +350,13 @@ namespace StableFluids
             return new Vector2(position.x - gridPosition.x, position.z - gridPosition.z) / (this._resolution * gridFollowPlayer.GridStepSize);
         }
 
-        public void ResetVelocityField(Vector2 offset)
+ public void RetrieveVelocityField(ref RenderTexture rt, Vector2 offset)
+        {
+            _offsetMaterial.SetVector("_Offset", new Vector4(offset.x, offset.y, 0, 0));
+            Graphics.Blit(GetVelocityField(), rt, _offsetMaterial);
+        }
+
+        public void SnapVelocityField(Vector2 offset)
         {
             RenderTexture color = AllocateBuffer(4, _colorRT1.width, _colorRT1.height);
             Graphics.Blit(_colorRT1, color);
