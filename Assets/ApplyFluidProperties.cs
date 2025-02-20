@@ -1,4 +1,5 @@
 using StableFluids;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.VFX;
@@ -8,11 +9,17 @@ public class ApplyFluidProperties : MonoBehaviour
 {
     [SerializeField] private Fluid fluidSimulator;
 
+    [Range(16, 65536)]
+    public int particleCount = 512;
+
     private VisualEffect effect;
     private static readonly int velocityFieldProperty = Shader.PropertyToID("VelocityField");
     private static readonly int playerRelativePositionProperty = Shader.PropertyToID("PlayerRelativePosition");
     private static readonly int planeOffsetProperty = Shader.PropertyToID("PlaneOffset");
     private static readonly int planeScaleProperty = Shader.PropertyToID("PlaneScale");
+    private static readonly int bufferProperty = Shader.PropertyToID("ParticleBuffer");
+    private static readonly int particleCountProperty = Shader.PropertyToID("ParticleCount");
+    private GraphicsBuffer buffer;
 
     [SerializeField] private GameObject player;
 
@@ -21,6 +28,24 @@ public class ApplyFluidProperties : MonoBehaviour
     private void OnEnable()
     {
         effect = GetComponent<VisualEffect>();
+        UpdateBuffer(particleCount);
+    }
+
+    void UpdateBuffer(int size)
+    {
+        buffer?.Dispose();
+        buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, size, 4 * sizeof(float));
+        effect.SetGraphicsBuffer(bufferProperty, buffer);
+        effect.SetInt(particleCountProperty, size);
+    }
+
+    private void OnValidate()
+    {
+        if (!effect)
+            effect = GetComponent<VisualEffect>();
+        UpdateBuffer(particleCount);
+        effect.Reinit();
+        effect.Play();
     }
 
     private void Start()

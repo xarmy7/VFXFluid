@@ -460,7 +460,10 @@ VisualEffect:
     m_Uint:
       m_Array: []
     m_Int:
-      m_Array: []
+      m_Array:
+      - m_Value: 65536
+        m_Name: ParticleCount
+        m_Overridden: 1
     m_Matrix4x4f:
       m_Array: []
     m_AnimationCurve:
@@ -484,6 +487,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fluidSimulator: {fileID: 823350952}
+  particleCount: 65536
   player: {fileID: 823350947}
   velocityFieldVisualizer: {fileID: 1005045240}
 --- !u!1001 &746329221
