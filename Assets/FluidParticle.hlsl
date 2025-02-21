@@ -27,7 +27,7 @@ void ApplyDensityVelocity(inout VFXAttributes attributes, RWStructuredBuffer<flo
         --maxInfluence;
     }
 
-    attributes.position += repelDir * repelForce;
+    attributes.velocity += repelDir * repelForce;
 }
 
 void ApplyVelocityField(inout VFXAttributes attributes, VFXSampler2D velocityField, in float advection, in float3 planeOffset)
